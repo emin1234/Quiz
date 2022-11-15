@@ -5,9 +5,14 @@ using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Repository;
+using Repository.Repositories;
+using Repository.Repositories.Interfaces;
+using Services.Services.Interfeces;
 
 namespace QuizService;
 
@@ -24,8 +29,11 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddMvc();
-        services.AddSingleton(InitializeDb());
-        services.AddControllers();
+        services.AddSingleton(InitializeDb(services));
+        services.AddScoped<IQuizService, Services.Services.QuizService>();
+        services.AddScoped<IQuizRepository, QuizRepository>();
+        services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,10 +50,30 @@ public class Startup
         });
     }
 
-    private IDbConnection InitializeDb()
+    private IDbConnection InitializeDb(IServiceCollection services)
     {
-        var connection = new SqliteConnection("Data Source=:memory:");
+        var connectionString = "DataSource=sharedDb;mode=memory;cache=shared";
+        var connection = new SqliteConnection(connectionString);
         connection.Open();
+
+        var optionsBuilder = new DbContextOptionsBuilder<RepositoryContext>();
+        optionsBuilder.UseSqlite(connectionString);
+        services.AddDbContext<RepositoryContext>(options => options.UseSqlite(connectionString));
+        var serviceProvider = services.BuildServiceProvider();
+
+        using (var scope = serviceProvider.CreateScope())
+        using (var db = scope.ServiceProvider.GetService<RepositoryContext>())
+        {
+            SeedData(db);
+        }
+
+        return connection;
+    }
+
+    private static void SeedData(RepositoryContext db)
+    {
+        db.Database.EnsureDeleted();
+        db.Database.EnsureCreated();
 
         // Migrate up
         var assembly = typeof(Startup).GetTypeInfo().Assembly;
@@ -55,13 +83,9 @@ public class Startup
         if (!migrationResourceNames.Any()) throw new System.Exception("No migration files found!");
         foreach (var resourceName in migrationResourceNames)
         {
-            var sql = GetResourceText(assembly, resourceName);
-            var command = connection.CreateCommand();
-            command.CommandText = sql;
-            command.ExecuteNonQuery();
+            var query = GetResourceText(assembly, resourceName);
+            db.Database.ExecuteSqlRaw(query);
         }
-
-        return connection;
     }
 
     private static string GetResourceText(Assembly assembly, string resourceName)
