@@ -5,6 +5,7 @@ using QuizService.Model;
 using System;
 using System.Threading.Tasks;
 using Services.Services.Interfeces;
+using Service.Dto;
 
 namespace QuizService.Controllers;
 
@@ -44,11 +45,11 @@ public class QuizController : Controller
 
     // POST api/quizzes
     [HttpPost]
-    public IActionResult Post([FromBody]QuizCreateModel value)
+    public IActionResult Post([FromBody] QuizDto value)
     {
         var sql = $"INSERT INTO Quiz (Title) VALUES('{value.Title}'); SELECT LAST_INSERT_ROWID();";
         var id = _connection.ExecuteScalar(sql);
-        return Created($"/api/quizzes/{id}", null);
+        return Created($"/api/quizzes/{id}", id);
     }
 
     // PUT api/quizzes/5
