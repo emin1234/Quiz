@@ -20,6 +20,7 @@ public class QuizClient
         _quizServiceUri = quizServiceUri;
         _httpClient = httpClient;
     }
+    //TODO: Create private method for initializing HttpRequestMessage and setting request headers in order to fulfill DRY principle
 
     public async Task<Response<IEnumerable<Quiz>>> GetQuizzesAsync(CancellationToken cancellationToken)
     {

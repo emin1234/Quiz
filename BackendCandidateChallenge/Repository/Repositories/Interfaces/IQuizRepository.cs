@@ -5,6 +5,9 @@ namespace Repository.Repositories.Interfaces
     /// <summary>
     /// Quiz repository.
     /// </summary>
+    
+    /// TODO: All other methods(CRUD and others) related to quizzes should be implemented here.
+    /// We should also create repository layer for all other entities like Answers, Questions etc.
     public interface IQuizRepository
     {
         /// <summary>

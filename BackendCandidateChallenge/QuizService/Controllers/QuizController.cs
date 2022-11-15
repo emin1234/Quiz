@@ -12,6 +12,7 @@ namespace QuizService.Controllers;
 [Route("api/quizzes")]
 public class QuizController : Controller
 {
+    //TODO: IDbConnection should be removed from project(EF is used instead of Dapper)
     private readonly IDbConnection _connection;
     private readonly IQuizService _quizService;
 
@@ -42,6 +43,15 @@ public class QuizController : Controller
 
         return Ok(quizDto);
     }
+
+    //TODO: All methods below should follow Service -> Repository pattern.
+    //All methods should be converted to async methods.
+    //We should remove all unnecessary models like QuizCreateModel, QuizUpdateModel etc. (entire "Model" folder from QuizService project).
+    //In controller we should use only QuizDto, QuestionDto and AnswerDto defined in "Service" class project. 
+
+    //TODO: We should create global error handlers using middlewares
+
+    //TODO: We should create logger manager
 
     // POST api/quizzes
     [HttpPost]

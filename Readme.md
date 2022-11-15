@@ -1,0 +1,2 @@
+In case some of the tests fails, please try to run them using test explorer insted of right click on test project and then selecting option run tests.
+Second option is to firstly clean solution, then rebuild solution and finally run tests however you want.

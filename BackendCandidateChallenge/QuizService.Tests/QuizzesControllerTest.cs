@@ -51,6 +51,7 @@ public class QuizzesControllerTest : IClassFixture<TestServerFixture>
         var response = await _serverFixture.Client.GetAsync($"{QuizApiEndPoint}{quizId}");
 
         //assert
+        //TODO: Create static generic method for deserializing responses
         var quiz = JsonConvert.DeserializeObject<QuizDto>(await response.Content.ReadAsStringAsync());
         Assert.Equal(quizId, quiz.Id);
     }
@@ -58,6 +59,9 @@ public class QuizzesControllerTest : IClassFixture<TestServerFixture>
     [Fact]
     public async Task Quiz_ShouldBeReturned_WithNumberOfCorrectAnswers_OnGetQuizById()
     {
+        //TODO: We can introduce UnitOfWork pattern in our application and then we can insert quiz, related questions and answers using only one
+        //POST request for quiz insertion instead of using multiple POST request
+        
         //arrange
         var quiz = QuizMock.GenerateRandomQuizDto();
         var postQuiz = await _serverFixture.Client.PostAsync(QuizApiEndPoint, ToHttpContent(quiz));
