@@ -115,10 +115,10 @@ public class QuizController : Controller
     // POST api/quizzes/5/questions/6/answers
     [HttpPost]
     [Route("{id}/questions/{qid}/answers")]
-    public IActionResult PostAnswer(int id, int qid, [FromBody]AnswerCreateModel value)
+    public IActionResult PostAnswer(int id, int qid, [FromBody] AnswerDto value)
     {
-        const string sql = "INSERT INTO Answer (Text, QuestionId) VALUES(@Text, @QuestionId); SELECT LAST_INSERT_ROWID();";
-        var answerId = _connection.ExecuteScalar(sql, new {Text = value.Text, QuestionId = qid});
+        const string sql = "INSERT INTO Answer (Text, QuestionId, IsCorrectAnswer) VALUES(@Text, @QuestionId, @IsCorrectAnswer); SELECT LAST_INSERT_ROWID();";
+        var answerId = _connection.ExecuteScalar(sql, new { Text = value.Text, QuestionId = qid, IsCorrectAnswer = value.IsCorrectAnswer });
         return Created($"/api/quizzes/{id}/questions/{qid}/answers/{answerId}", null);
     }
 
