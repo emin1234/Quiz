@@ -83,7 +83,7 @@ public class QuizController : Controller
         {
             const string sql = "INSERT INTO Question (Text, QuizId) VALUES(@Text, @QuizId); SELECT LAST_INSERT_ROWID();";
             var questionId = _connection.ExecuteScalar(sql, new { Text = value.Text, QuizId = id });
-            return Created($"/api/quizzes/{id}/questions/{questionId}", null);
+            return Created($"/api/quizzes/{id}/questions/{questionId}", questionId);
         }
         catch (Exception)
         {

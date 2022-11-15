@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -7,6 +9,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using QuizService.Model;
 using QuizService.Tests.Base;
+using QuizService.Tests.Mock;
 using Service.Dto;
 using Xunit;
 
@@ -50,6 +53,42 @@ public class QuizzesControllerTest : IClassFixture<TestServerFixture>
         //assert
         var quiz = JsonConvert.DeserializeObject<QuizDto>(await response.Content.ReadAsStringAsync());
         Assert.Equal(quizId, quiz.Id);
+    }
+
+    [Fact]
+    public async Task Quiz_ShouldBeReturned_WithNumberOfCorrectAnswers_OnGetQuizById()
+    {
+        //arrange
+        var quiz = QuizMock.GenerateRandomQuizDto();
+        var postQuiz = await _serverFixture.Client.PostAsync(QuizApiEndPoint, ToHttpContent(quiz));
+        var quizId = JsonConvert.DeserializeObject<int>(await postQuiz.Content.ReadAsStringAsync());
+
+        List<QuestionDto> Questions = QuestionMock.GenerateRandomQuestionsDto(2);
+        List<int> QuestionIds = new List<int>();
+        foreach (var item in Questions)
+        {
+            var postQuestion = await _serverFixture.Client.PostAsync($"{QuizApiEndPoint}{quizId}/questions", ToHttpContent(item));
+            var insertedQuestionId = JsonConvert.DeserializeObject<int>(await postQuestion.Content.ReadAsStringAsync());
+            QuestionIds.Add(insertedQuestionId);
+        }
+
+        List<AnswerDto> Answers = AnswerMock.GenerateRandomAnswersDto(4);
+        for (int i = 0; i < Answers.Count; i++)
+        {
+            int questionId = (i % 2 == 0) ? QuestionIds[0] : QuestionIds[1];
+            //setting that one answer per question is correct
+            Answers[i].IsCorrectAnswer = (i < 2) ? true : false;
+            await _serverFixture.Client.PostAsync($"{QuizApiEndPoint}{quizId}/questions/{questionId}/answers", ToHttpContent(Answers[i]));
+        }
+
+        //act
+        var response = await _serverFixture.Client.GetAsync($"{QuizApiEndPoint}{quizId}");
+        var quizResponse = JsonConvert.DeserializeObject<QuizDto>(await response.Content.ReadAsStringAsync());
+
+        //assert
+        var numberOfCorrectAnswers = quizResponse.Questions.SelectMany(a => a.Answers.Where(a => a.IsCorrectAnswer == true));
+        Assert.Equal(quizId, quizResponse.Id);
+        Assert.Equal(2, numberOfCorrectAnswers.Count());
     }
 
     [Fact]
